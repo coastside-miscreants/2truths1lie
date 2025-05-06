@@ -2,6 +2,8 @@
 
 This project implements a web-based version of the "2 Truths and a Lie" game (specifically, 2 truths and 1 AI-generated lie), powered by Anthropic's Claude LLM.
 
+<img width="792" alt="Screenshot 2025-05-06 at 12 29 33 AM" src="https://github.com/user-attachments/assets/811b9ace-5fbb-40ed-ba0b-0ac334830693" />
+
 ## Features
 
 *   Fetches game rounds (2 truths, 1 lie) from Anthropic Claude 3.5 Sonnet.
