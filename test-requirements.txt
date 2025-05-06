@@ -1,0 +1,9 @@
+pytest
+pytest-cov
+pytest-mock
+requests
+pytest-flask
+pytest-timeout
+fakeredis
+selenium
+webdriver-manager

@@ -1,0 +1,5 @@
+Flask
+anthropic
+PyYAML
+gevent # Added for async Gunicorn worker
+redis # Added for persistent session history

@@ -1,0 +1,27 @@
+# Dockerfile for running tests
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Install Node.js for frontend tests
+RUN apt-get update && apt-get install -y \
+    nodejs \
+    npm \
+    curl \
+    gnupg \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install dependencies
+COPY requirements.txt test-requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt -r test-requirements.txt
+
+# Copy package.json and install Node.js dependencies
+COPY package.json .babelrc jest.config.js ./
+RUN npm install
+
+# Copy the rest of the application code
+COPY . .
+
+# Run the tests
+CMD ["bash", "run_tests.sh"]

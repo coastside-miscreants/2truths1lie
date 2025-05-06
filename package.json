@@ -1,0 +1,19 @@
+{
+  "name": "two-truths-ai-game",
+  "version": "1.0.0",
+  "description": "Two Truths and AI web game",
+  "scripts": {
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "test:backend": "pytest tests/test_backend.py -v",
+    "test:frontend": "jest tests/test_frontend.js",
+    "test:all": "npm run test:backend && npm run test:frontend"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.23.0",
+    "@babel/preset-env": "^7.23.0",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  }
+}

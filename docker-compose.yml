@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      # The Anthropic API key needs to be provided here
+      # You can create a .env file in the same directory as this docker-compose.yml
+      # and add the line: ANTHROPIC_API_KEY=your_actual_api_key
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    # Optional: Mount local code for development (uncomment if needed)
+    # volumes:
+    #   - ./src:/app/src
+    #   - ./claude_prompt.txt:/app/claude_prompt.txt
+    depends_on:
+      - redis
+  
+  redis:
+    image: redis:alpine
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+  
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+    volumes:
+      - ./:/app
+      - node_modules:/app/node_modules
+    # This service is meant to be run with docker-compose run test
+
+volumes:
+  redis_data:
+  node_modules:

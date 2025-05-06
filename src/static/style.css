@@ -1,0 +1,268 @@
+/* style.css - Inspired by Meow Mart & Batman POW! */
+
+@import url("https://fonts.googleapis.com/css2?family=Bangers&family=Roboto:wght@400;700&display=swap");
+
+:root {
+    --primary-yellow: #FFDA00; /* Bright Yellow */
+    --secondary-red: #F95738; /* Orange-Red */
+    --accent-teal: #00A79D; /* Teal/Green */
+    --accent-blue: #1D3557; /* Dark Blue */
+    --neutral-white: #FFFFFF;
+    --neutral-black: #000000;
+    --text-shadow: 2px 2px 0px var(--neutral-black);
+    --box-shadow: 3px 3px 0px var(--neutral-black);
+}
+
+body {
+    font-family: "Roboto", sans-serif;
+    background-color: var(--primary-yellow); /* Yellow background */
+    color: var(--neutral-black);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+}
+
+.container {
+    background-color: var(--neutral-white);
+    border: 3px solid var(--neutral-black);
+    box-shadow: 5px 5px 0px var(--neutral-black);
+    padding: 20px 30px;
+    max-width: 700px;
+    width: 100%;
+    text-align: center;
+    border-radius: 5px;
+}
+
+header {
+    border-bottom: 3px dashed var(--neutral-black);
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+}
+
+/* Added for the title container */
+.title-container {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.game-title {
+    font-family: "Bangers", cursive;
+    font-size: 3.5em; /* Larger title */
+    color: var(--secondary-red);
+    text-shadow: 3px 3px 0px var(--neutral-white), 5px 5px 0px var(--neutral-black); /* White outline, black shadow */
+    margin: 0 0 10px 0;
+    letter-spacing: 2px;
+}
+
+.score-board {
+    background-color: var(--accent-blue);
+    color: var(--neutral-white);
+    padding: 8px 15px;
+    border-radius: 5px;
+    display: inline-block;
+    font-weight: bold;
+    border: 2px solid var(--neutral-black);
+    box-shadow: var(--box-shadow);
+}
+
+.instructions {
+    font-size: 1.4em;
+    font-weight: bold;
+    color: var(--accent-blue);
+    margin-bottom: 25px;
+}
+
+#statements-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.statement-button {
+    background-color: var(--accent-teal);
+    color: var(--neutral-white);
+    border: 2px solid var(--neutral-black);
+    padding: 15px 20px;
+    font-size: 1.1em;
+    cursor: pointer;
+    border-radius: 5px;
+    text-align: left;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    box-shadow: var(--box-shadow);
+    width: 100%; /* Ensure buttons take full width */
+    box-sizing: border-box; /* Include padding and border in width */
+}
+
+.statement-button:hover {
+    background-color: #007a70; /* Darker teal */
+}
+
+.statement-button:active {
+    transform: translateY(2px);
+    box-shadow: 1px 1px 0px var(--neutral-black);
+}
+
+.statement-placeholder {
+    color: #666;
+    padding: 20px;
+    font-style: italic;
+}
+
+#feedback-area {
+    margin-top: 20px;
+    padding: 15px;
+    border: 2px dashed var(--neutral-black);
+    border-radius: 5px;
+    background-color: #f0f0f0;
+    position: relative;
+    min-height: 100px; /* Ensure space for the flash message */
+}
+
+#feedback-text {
+    font-size: 1.3em;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+#feedback-text.correct {
+    color: #28a745; /* Green */
+}
+
+#feedback-text.incorrect {
+    color: var(--secondary-red); /* Use secondary red for incorrect */
+}
+
+/* Modified Flashing Text Styles - Batman POW! inspired */
+#flash-feedback {
+    position: fixed; /* Changed from absolute to fixed to position over game title */
+    top: 110px; /* Positioned to appear over the game title */
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-10deg); /* Add rotation */
+    font-family: "Bangers", cursive;
+    font-size: 3em; /* Make it larger */
+    padding: 15px 25px;
+    border: 4px solid var(--neutral-black); /* Thick black border */
+    border-radius: 8px;
+    z-index: 1000; /* Increased z-index to ensure it appears on top */
+    text-align: center;
+    pointer-events: none; /* Don't block clicks */
+    text-transform: uppercase; /* Uppercase like comic effects */
+    letter-spacing: 1px;
+}
+
+#flash-feedback.flash-correct {
+    color: var(--primary-yellow); /* Yellow text */
+    background-color: #28a745; /* Green background */
+    text-shadow: 2px 2px 0px var(--neutral-black); /* Black shadow */
+    box-shadow: 5px 5px 0px rgba(0, 0, 0, 0.5); /* Add depth */
+}
+
+#flash-feedback.flash-incorrect {
+    color: var(--primary-yellow); /* Yellow text */
+    background-color: var(--secondary-red); /* Red background */
+    text-shadow: 2px 2px 0px var(--neutral-black); /* Black shadow */
+    box-shadow: 5px 5px 0px rgba(0, 0, 0, 0.5); /* Add depth */
+}
+
+/* Updated flash animation for POW effect */
+@keyframes flash-pow-animation {
+    0%, 100% { opacity: 1; transform: translate(-50%, -50%) rotate(-10deg) scale(1); }
+    50% { opacity: 0.5; transform: translate(-50%, -50%) rotate(-8deg) scale(1.1); } /* Slightly change rotation and scale */
+}
+
+.flashing {
+    /* Use the new animation name */
+    animation: flash-pow-animation 0.4s ease-in-out 3; /* Flash 3 times */
+}
+/* End Flashing Text Styles */
+
+#explanations p {
+    margin: 10px 0;
+    text-align: left;
+    line-height: 1.6;
+    padding: 10px;
+    border-radius: 3px;
+}
+
+#explanations p strong {
+    display: block;
+    margin-bottom: 5px;
+}
+
+#explanations p.true-explanation {
+    background-color: #e2f0e6;
+    border-left: 4px solid #28a745;
+}
+
+#explanations p.false-explanation {
+    background-color: #fdecea;
+    border-left: 4px solid var(--secondary-red);
+}
+
+#next-round-button {
+    background-color: var(--secondary-red);
+    color: var(--neutral-white);
+    border: 2px solid var(--neutral-black);
+    padding: 12px 25px;
+    font-size: 1.2em;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-top: 25px;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    box-shadow: var(--box-shadow);
+}
+
+#next-round-button:hover {
+    background-color: #d84315; /* Darker red */
+}
+
+#next-round-button:active {
+    transform: translateY(2px);
+    box-shadow: 1px 1px 0px var(--neutral-black);
+}
+
+footer {
+    margin-top: 30px;
+    padding-top: 15px;
+    border-top: 1px solid #ccc;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .container {
+        padding: 15px;
+    }
+    .game-title {
+        font-size: 2.5em;
+    }
+    .instructions {
+        font-size: 1.2em;
+    }
+    .statement-button {
+        font-size: 1em;
+        padding: 12px 15px;
+    }
+    #feedback-text {
+        font-size: 1.1em;
+    }
+    #flash-feedback {
+        font-size: 2em; /* Adjust size for mobile */
+        padding: 10px 15px;
+        top: 90px; /* Adjust position for smaller screens */
+    }
+    #next-round-button {
+        font-size: 1.1em;
+        padding: 10px 20px;
+    }
+}
