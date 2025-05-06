@@ -87,11 +87,17 @@ def test_trigger_new_round(client, mock_anthropic):
     response = client.get('/api/trigger_new_round')
     assert response.status_code == 200
     assert json.loads(response.data)['message'] == "New round generation triggered"
+    # Check for CORS headers
+    assert response.headers.get('Access-Control-Allow-Origin') == '*'
+    assert 'Content-Type' in response.headers.get('Access-Control-Allow-Headers', '')
+    assert 'GET' in response.headers.get('Access-Control-Allow-Methods', '')
     
     # Second request while generation is in progress should return 202 Accepted
     response = client.get('/api/trigger_new_round')
     assert response.status_code == 202
     assert json.loads(response.data)['message'] == "New round generation already requested"
+    # Check for CORS headers
+    assert response.headers.get('Access-Control-Allow-Origin') == '*'
 
 @patch('src.main.current_session_id', 'test-session-id')
 def test_session_endpoint_get(client, mock_redis):
@@ -102,6 +108,10 @@ def test_session_endpoint_get(client, mock_redis):
     assert data['session_id'] == 'test-session-id'
     assert 'round_count' in data
     assert 'rounds_in_history' in data
+    # Check for CORS headers
+    assert response.headers.get('Access-Control-Allow-Origin') == '*'
+    assert 'Content-Type' in response.headers.get('Access-Control-Allow-Headers', '')
+    assert 'GET' in response.headers.get('Access-Control-Allow-Methods', '')
 
 @patch('src.main.current_session_id', 'test-session-id')
 def test_session_endpoint_post_reset(client, mock_redis):
@@ -134,6 +144,19 @@ def test_session_endpoint_post_invalid(client):
     assert response.status_code == 400
     data = json.loads(response.data)
     assert 'error' in data
+    # Check for CORS headers
+    assert response.headers.get('Access-Control-Allow-Origin') == '*'
+    
+def test_session_endpoint_options(client):
+    """Test the OPTIONS request for /api/session endpoint (CORS preflight)."""
+    response = client.options('/api/session')
+    assert response.status_code == 200
+    # Check CORS headers are set correctly
+    assert response.headers.get('Access-Control-Allow-Origin') == '*'
+    assert 'Content-Type' in response.headers.get('Access-Control-Allow-Headers', '')
+    assert 'GET' in response.headers.get('Access-Control-Allow-Methods', '')
+    assert 'POST' in response.headers.get('Access-Control-Allow-Methods', '')
+    assert 'OPTIONS' in response.headers.get('Access-Control-Allow-Methods', '')
 
 def test_get_session_id():
     """Test the get_session_id function."""
@@ -193,10 +216,14 @@ def test_generate_new_round(mock_anthropic, config_file):
 def test_game_stream_endpoint(client):
     """Test the /api/game_stream SSE endpoint."""
     # This is more challenging to test thoroughly without a full integration test
-    # But we can check that it returns the correct content type
+    # But we can check that it returns the correct content type and CORS headers
     response = client.get('/api/game_stream')
     assert response.status_code == 200
     assert response.content_type == 'text/event-stream'
+    # Check for CORS headers
+    assert response.headers.get('Access-Control-Allow-Origin') == '*'
+    assert 'Content-Type' in response.headers.get('Access-Control-Allow-Headers', '')
+    assert 'GET' in response.headers.get('Access-Control-Allow-Methods', '')
     
 # Tests for error handling
 def test_generate_new_round_anthropic_error():

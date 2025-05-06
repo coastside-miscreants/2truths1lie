@@ -515,7 +515,12 @@ def broadcast_message(event_type, payload):
 
     # Broadcast to all connected clients
     with lock:
-        logging.info(f"[broadcast_message] Acquiring lock. Broadcasting to {len(message_queues)} clients.")
+        client_count = len(message_queues)
+        logging.info(f"[broadcast_message] Acquiring lock. Broadcasting to {client_count} clients.")
+        
+        if client_count == 0:
+            logging.warning("[broadcast_message] No clients connected to receive message!")
+        
         for client_id, queue in message_queues.items():
             try:
                 # Format as SSE message: "data: {json}\n\n"
@@ -696,15 +701,27 @@ def trigger_new_round():
     global new_round_requested
     logging.info("[trigger_new_round] Endpoint hit.")
     
+    # Enable CORS for this endpoint
+    response = None
+    
     if not new_round_requested:
         logging.info("[trigger_new_round] Setting new_round_requested flag to TRUE.")
         new_round_requested = True
-        return jsonify({"message": "New round generation triggered"}), 200
+        response = jsonify({"message": "New round generation triggered"})
+        status_code = 200
     else:
         logging.warning("[trigger_new_round] Request received but generation already in progress/requested.")
-        return jsonify({"message": "New round generation already requested"}), 202
+        response = jsonify({"message": "New round generation already requested"})
+        status_code = 202
+        
+    # Add CORS headers
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+    response.headers.add("Access-Control-Allow-Methods", "GET")
+    
+    return response, status_code
 
-@app.route("/api/session", methods=["GET", "POST"])
+@app.route("/api/session", methods=["GET", "POST", "OPTIONS"])
 def manage_session():
     """
     API endpoint to view or manage session history.
@@ -717,11 +734,23 @@ def manage_session():
     - Supports session management actions:
       - 'reset': Clear session history
       - 'new': Create a new session
+      
+    OPTIONS:
+    - Handles CORS preflight requests
     
     Returns:
         GET: JSON response with session data
         POST: JSON response confirming the action taken
+        OPTIONS: Empty response with CORS headers
     """
+    # Handle OPTIONS request for CORS preflight
+    if request.method == "OPTIONS":
+        response = app.make_default_options_response()
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+        response.headers.add("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+        return response
+        
     # Get current session ID
     session_id = get_session_id()
     
@@ -736,7 +765,7 @@ def manage_session():
         history = get_session_history(session_id)
         
         # Prepare base response with session metadata
-        response = {
+        response_data = {
             "session_id": session_id,
             "round_count": history["round_count"],
             "rounds_in_history": len(history["rounds"]),
@@ -772,10 +801,10 @@ def manage_session():
                     if round_num in easter_egg_rounds:
                         filtered_rounds.append(round_data)
                 
-                response["rounds"] = filtered_rounds
+                response_data["rounds"] = filtered_rounds
             else:
                 # Include all rounds
-                response["rounds"] = history["rounds"]
+                response_data["rounds"] = history["rounds"]
             
         # Add prompts if requested and Redis is available
         if include_prompts and redis_client:
@@ -794,10 +823,10 @@ def manage_session():
                     except json.JSONDecodeError:
                         logging.error(f"Failed to decode prompt JSON: {prompt_json}")
                 
-                response["prompts"] = prompts
+                response_data["prompts"] = prompts
             except Exception as e:
                 logging.error(f"Error retrieving prompts from Redis: {e}")
-                response["prompts"] = []
+                response_data["prompts"] = []
                 
         # Add responses if requested and Redis is available
         if include_responses and redis_client:
@@ -825,24 +854,31 @@ def manage_session():
                 
                 for response_json in response_history:
                     try:
-                        response_data = json.loads(response_json)
+                        response_data_item = json.loads(response_json)
                         # If filtering for easter eggs, only include responses from easter egg rounds
-                        if easter_eggs_only and response_data["round_number"] not in easter_egg_rounds:
+                        if easter_eggs_only and response_data_item["round_number"] not in easter_egg_rounds:
                             continue
-                        responses.append(response_data)
+                        responses.append(response_data_item)
                     except json.JSONDecodeError:
                         logging.error(f"Failed to decode response JSON: {response_json}")
                 
-                response["responses"] = responses
+                response_data["responses"] = responses
             except Exception as e:
                 logging.error(f"Error retrieving responses from Redis: {e}")
-                response["responses"] = []
+                response_data["responses"] = []
         
-        return jsonify(response), 200
+        # Create response with CORS headers
+        response = jsonify(response_data)
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+        response.headers.add("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+        return response, 200
     
     elif request.method == "POST":
         # Handle different session management actions
         action = request.json.get("action", "")
+        response_data = {}
+        status_code = 200
         
         if action == "reset":
             # Reset session - clear all history
@@ -868,34 +904,42 @@ def manage_session():
                     redis_client.expire(session_key, REDIS_SESSION_EXPIRY)
                     
                     logging.info(f"[manage_session] Redis session {session_id} reset. Cleared {round_count} rounds.")
-                    return jsonify({"message": f"Session reset. Cleared {round_count} rounds."}), 200
+                    response_data = {"message": f"Session reset. Cleared {round_count} rounds."}
                 except Exception as e:
                     logging.error(f"[manage_session] Error resetting Redis session: {e}")
                     # Fall back to in-memory reset
-            
-            # In-memory fallback for reset
-            with history_lock:
-                old_count = session_history["round_count"]
-                session_history = {
-                    "rounds": [],
-                    "round_count": 0
-                }
-                logging.info(f"[manage_session] In-memory session reset. Cleared {old_count} rounds.")
-                return jsonify({"message": f"Session reset. Cleared {old_count} rounds."}), 200
+            else:
+                # In-memory fallback for reset
+                with history_lock:
+                    old_count = session_history["round_count"]
+                    session_history = {
+                        "rounds": [],
+                        "round_count": 0
+                    }
+                    logging.info(f"[manage_session] In-memory session reset. Cleared {old_count} rounds.")
+                    response_data = {"message": f"Session reset. Cleared {old_count} rounds."}
         
         elif action == "new":
             # Create a brand new session
             global current_session_id
             current_session_id = str(uuid.uuid4())
             logging.info(f"[manage_session] Created new session: {current_session_id}")
-            return jsonify({
+            response_data = {
                 "message": "New session created",
                 "session_id": current_session_id
-            }), 200
+            }
             
         else:
             # Invalid action requested
-            return jsonify({"error": "Invalid action. Use 'reset' to clear session history or 'new' to create a new session."}), 400
+            response_data = {"error": "Invalid action. Use 'reset' to clear session history or 'new' to create a new session."}
+            status_code = 400
+            
+        # Create response with CORS headers
+        response = jsonify(response_data)
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+        response.headers.add("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+        return response, status_code
 
 @app.route("/api/game_stream")
 def game_stream():
@@ -914,6 +958,9 @@ def game_stream():
     """
     global new_round_requested, preloaded_round
     
+    # Log headers for debugging
+    logging.info(f"[game_stream] Request headers: {request.headers}")
+    
     # Create a message queue for this client
     queue = Queue()
     client_id = id(queue)
@@ -931,16 +978,21 @@ def game_stream():
         """Generator function that yields SSE messages for this client."""
         logging.info(f"[game_stream] Starting stream generator for client {client_id}.")
         try:
+            # Send an initial message to ensure the connection is established
+            yield "data: {\"type\":\"connected\",\"message\":\"Connection established\"}\n\n"
+            logging.info(f"[game_stream] Sent initial connection message to client {client_id}")
+            
             while True:
                 try:
                     # Wait for messages from the queue with a timeout
                     # This allows for periodic keep-alive messages
-                    msg = queue.get(timeout=120)  # 2-minute timeout
+                    msg = queue.get(timeout=20)  # Shorter timeout for more frequent keep-alives
                     logging.info(f"[game_stream] Client {client_id} received message from queue. Yielding.")
                     yield msg
                 except Empty:
                     # If queue is empty after timeout, send keep-alive to maintain connection
                     yield ": keep-alive\n\n"
+                    logging.info(f"[game_stream] Sent keep-alive to client {client_id}")
         except GeneratorExit:
             # Client disconnected
             logging.info(f"[game_stream] Client {client_id} disconnected (GeneratorExit).")
@@ -952,8 +1004,15 @@ def game_stream():
                     del message_queues[client_id]
                     logging.info(f"[game_stream] Removed queue for client {client_id}.")
 
-    # Return the streaming response with appropriate MIME type
-    return Response(stream(), mimetype="text/event-stream")
+    # Enable CORS for SSE endpoint
+    response = Response(stream(), mimetype="text/event-stream")
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+    response.headers.add("Access-Control-Allow-Methods", "GET")
+    response.headers.add("Cache-Control", "no-cache")
+    response.headers.add("Connection", "keep-alive")
+    response.headers.add("X-Accel-Buffering", "no")  # Disable proxy buffering
+    return response
 
 # --- Static File Serving ---
 @app.route("/")
@@ -1002,6 +1061,7 @@ def serve(path=""):
 # --- Main Application Entry Point ---
 if __name__ == "__main__":
     # Start the Flask development server when script is run directly
-    port = 3002  # Using port 3002 for local development (avoids conflicts)
+    # Get port from environment variable or use default
+    port = int(os.getenv('PORT', 3002))  # Default to 3002 for local development (avoids conflicts)
     logging.info(f"Starting Flask development server for local testing on 0.0.0.0:{port}")
     app.run(host="0.0.0.0", port=port, debug=False)

@@ -101,10 +101,8 @@ document.addEventListener("DOMContentLoaded", () => {
             eventSource.close();
         }
         
-        // Use the correct base URL depending on the environment
-        const baseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-            ? `http://${window.location.hostname}:3002` 
-            : '';
+        // No need to specify port - browser automatically uses current host/port
+        const baseUrl = '';
             
         // Create new SSE connection to the game stream endpoint
         eventSource = new EventSource(`${baseUrl}/api/game_stream`);

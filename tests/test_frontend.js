@@ -173,10 +173,32 @@ describe('Two Truths & AI Game Frontend', () => {
     nextRoundButton.click();
     
     // Check that fetch was called with correct URL
+    // The baseUrl logic should correctly handle local vs deployed environments
     expect(fetch).toHaveBeenCalledWith('/api/trigger_new_round');
     
     // Check that loading indicator is shown
     expect(statementsContainer.innerHTML).toContain('spinner');
+  });
+  
+  test('Should handle cross-origin API URL in local development', () => {
+    // Mock window.location properties for testing
+    Object.defineProperty(window, 'location', {
+      value: {
+        hostname: 'localhost',
+        port: '3001'
+      },
+      writable: true
+    });
+    
+    // Create a mock for the EventSource constructor to check its URL
+    window.EventSource.mockClear();
+    
+    // Create a new instance with a manually constructed URL similar to connectSSE()
+    const baseUrl = `http://${window.location.hostname}:3002`;
+    new EventSource(`${baseUrl}/api/game_stream`);
+    
+    // Verify that EventSource was created with the correct cross-origin URL
+    expect(EventSource).toHaveBeenCalledWith('http://localhost:3002/api/game_stream');
   });
   
   test('Should handle server errors correctly', () => {

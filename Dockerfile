@@ -24,10 +24,10 @@ EXPOSE 3001
 # Define environment variable for the Flask app (optional but good practice)
 ENV FLASK_APP=src/main.py
 ENV FLASK_RUN_HOST=0.0.0.0
-ENV FLASK_RUN_PORT=3001
+ENV PORT=3001
 
 # Define the command to run the application
 # Use gunicorn for a production-ready server instead of Flask's dev server
 # Install gunicorn and gevent for production server
 RUN pip install gunicorn gevent
-CMD ["gunicorn", "--worker-class", "gevent", "--bind", "0.0.0.0:3001", "--timeout", "120", "src.main:app"]
+CMD ["sh", "-c", "gunicorn --worker-class gevent --bind 0.0.0.0:${PORT} --timeout 120 src.main:app"]

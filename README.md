@@ -120,7 +120,14 @@ The application uses Redis for persistent session history:
         ```
     *   If not configured, the application will fall back to in-memory storage.
 
-4.  **Build and Run with Docker Compose:**
+4.  **Configure Port (Optional):**
+    *   You can customize the port the application runs on:
+        ```
+        PORT=8080
+        ```
+    *   If not configured, the default port 3001 will be used.
+
+5.  **Build and Run with Docker Compose:**
     *   Open a terminal in the project's root directory.
     *   Run the command:
         ```bash
@@ -128,10 +135,10 @@ The application uses Redis for persistent session history:
         ```
     *   This command will build the Docker image (if it doesn't exist) and start the web service.
 
-5.  **Access the Game:**
-    *   Open your web browser and navigate to `http://localhost:3001`.
+6.  **Access the Game:**
+    *   Open your web browser and navigate to `http://localhost:PORT` where PORT is the port you configured (default: 3001).
 
-6.  **Stopping the Game:**
+7.  **Stopping the Game:**
     *   Press `Ctrl+C` in the terminal where `docker-compose up` is running.
     *   You can optionally run `docker-compose down` to remove the container.
 
@@ -155,12 +162,17 @@ For local development without Docker:
    export ANTHROPIC_API_KEY=your_api_key  # On Windows: set ANTHROPIC_API_KEY=your_api_key
    ```
 
-4. Run the Flask application:
+4. Configure port (optional):
+   ```bash
+   export PORT=8080  # On Windows: set PORT=8080
+   ```
+
+5. Run the Flask application:
    ```bash
    python src/main.py
    ```
 
-5. Access the application at `http://localhost:3002`
+6. Access the application at the configured port (default: `http://localhost:3002`)
 
 ## Advanced Configuration
 
@@ -199,9 +211,10 @@ The project includes comprehensive testing for both frontend and backend compone
 
 ### Prerequisites for Testing
 
-- Python 3.8+
-- Node.js 14+ (for frontend tests)
-- Chrome browser (for integration tests)
+- Docker (for running tests in a consistent environment)
+- Python 3.8+ (for local testing)
+- Node.js 14+ (for local frontend tests)
+- Chrome browser (for local integration tests)
 
 ### Test Structure
 
@@ -211,21 +224,20 @@ The project includes comprehensive testing for both frontend and backend compone
 
 ### Running Tests
 
-#### Option 1: Using the provided script
+#### Running tests with Docker (Recommended)
 
-Run all tests with a single command:
-
-```bash
-./run_tests.sh
-```
-
-To include integration tests (requires Chrome browser):
+The easiest way to run tests is using Docker, which provides a consistent environment:
 
 ```bash
-./run_tests.sh --integration
+./test_in_docker.sh
 ```
 
-#### Option 2: Running tests individually
+This script will:
+- Build a test Docker image using Dockerfile.test
+- Run all the unit tests inside the container
+- Generate a coverage report
+
+#### Running tests locally
 
 **Backend Tests:**
 
@@ -256,24 +268,6 @@ pip install -r test-requirements.txt
 # Run integration tests
 pytest tests/test_integration.py -v
 ```
-
-#### Option 3: Running tests with Docker
-
-You can run the tests in a Docker container to ensure a consistent environment:
-
-```bash
-# Method 1: Using the provided script
-./run_tests_with_docker.sh
-
-# Method 2: Using docker-compose directly
-docker-compose run test
-
-# Method 3: Using the standalone Dockerfile.test
-docker build -f Dockerfile.test -t two-truths-ai-test .
-docker run --rm two-truths-ai-test
-```
-
-All methods will run the unit tests. The integration tests are excluded by default as they require a browser to be installed in the container.
 
 ### Test Coverage
 

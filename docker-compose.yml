@@ -4,7 +4,7 @@ services:
   web:
     build: .
     ports:
-      - "3001:3001"
+      - "${PORT:-3001}:${PORT:-3001}"
     environment:
       # The Anthropic API key needs to be provided here
       # You can create a .env file in the same directory as this docker-compose.yml
@@ -12,6 +12,7 @@ services:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - PORT=${PORT:-3001}
     # Optional: Mount local code for development (uncomment if needed)
     # volumes:
     #   - ./src:/app/src
